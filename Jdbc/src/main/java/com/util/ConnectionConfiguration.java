@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 
 public class ConnectionConfiguration {
-
+//La salida de la conexion se encuentra en las dependecias de los pom
 	public static Connection getConnection() {
 		Connection connection = null;
 

@@ -1,6 +1,7 @@
 package com.daoimpl;
 
 import com.dao.PersonDao;
+import com.dao.PersonPlusDao;
 import com.entities.Person;
 import com.util.ConnectionConfiguration;
 
@@ -8,37 +9,49 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PersonDaoImpl implements PersonDao {
+public class PersonDaoImpl implements PersonDao, PersonPlusDao {
 
 	public void createPersonTable() {
 		Connection connection = null;
 		Statement statement = null;
 
 		try {
+			// Los metodos de la clase connection son iguales para todos las bases de datos
 			connection = ConnectionConfiguration.getConnection();
 			statement = connection.createStatement();
-			statement.execute("CREATE TABLE IF NOT EXISTS person (id bigint auto_increment," +
-					"first_name varchar(55), last_name varchar(55))");
+			statement.execute("CREATE TABLE IF NOT EXISTS person (id bigint auto_increment,"
+					+ "first_name varchar(55), last_name varchar(55))");
 
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			if (statement != null) {
-				try {
-					statement.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
+		} finally {// El finally hace que el codigo se ejecute siempre
+			closeStatement(statement);
+			closeConection(connection);
+		}
+	}
 
-			if (connection != null) {
-				try {
-					connection.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+	private void closeConection(Connection connection) {
+		if (connection != null) {
+			try {
+				connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
 		}
+	}
+
+	private void closeStatement(Statement statement) {
+		if (statement != null) {
+			try {
+				statement.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public Person selectyLastName() {
+		return null;
 	}
 
 	public void insert(Person person) {
@@ -47,31 +60,27 @@ public class PersonDaoImpl implements PersonDao {
 
 		try {
 			connection = ConnectionConfiguration.getConnection();
-			preparedStatement = connection.prepareStatement("INSERT INTO person (first_name,last_name)" +
-					"VALUES (?, ?)");
+			preparedStatement = connection.prepareStatement("INSERT INTO person (first_name,last_name)" + "VALUES (?, ?)");
 			preparedStatement.setString(1, person.getFirstName());
 			preparedStatement.setString(2, person.getLastName());
 			preparedStatement.executeUpdate();
-			System.out.println("INSERT INTO person (first_name,last_name)" +
-					"VALUES (?, ?)");
+			System.out.println("INSERT INTO person (first_name,last_name)" + "VALUES (?, ?)");
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
+			preparedStatement(preparedStatement);
 
-			if (connection != null) {
-				try {
-					connection.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+			closeConection(connection);
+		}
+	}
+
+	private void preparedStatement(PreparedStatement preparedStatement) {
+		if (preparedStatement != null) {
+			try {
+				preparedStatement.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -97,30 +106,22 @@ public class PersonDaoImpl implements PersonDao {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			if (resultSet != null) {
-				try {
-					resultSet.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-			if (connection != null) {
-				try {
-					connection.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
+		
+			preparedStatement(preparedStatement);
+			closeConection(connection);
 		}
 
 		return person;
+	}
+
+	private void closeResulSet(ResultSet resultSet) {
+		if (resultSet != null) {
+			try {
+				resultSet.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public List<Person> selectAll() {
@@ -146,27 +147,9 @@ public class PersonDaoImpl implements PersonDao {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			if (resultSet != null) {
-				try {
-					resultSet.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-			if (statement != null) {
-				try {
-					statement.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-			if (connection != null) {
-				try {
-					connection.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
+			closeResulSet(resultSet);
+			closeStatement(statement);
+			closeConection(connection);
 		}
 
 		return persons;
@@ -179,6 +162,7 @@ public class PersonDaoImpl implements PersonDao {
 		try {
 			connection = ConnectionConfiguration.getConnection();
 			preparedStatement = connection.prepareStatement("DELETE FROM person WHERE id = ?");
+			//Los indices en el set son el orden de los interrogantes
 			preparedStatement.setInt(1, id);
 			preparedStatement.executeUpdate();
 
@@ -187,20 +171,8 @@ public class PersonDaoImpl implements PersonDao {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-			if (connection != null) {
-				try {
-					connection.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
+			preparedStatement(preparedStatement);
+			closeConection(connection);
 		}
 	}
 
@@ -210,34 +182,21 @@ public class PersonDaoImpl implements PersonDao {
 
 		try {
 			connection = ConnectionConfiguration.getConnection();
-			preparedStatement = connection.prepareStatement("UPDATE person SET " +
-					"first_name = ?, last_name = ? WHERE id = ?");
+			preparedStatement = connection
+					.prepareStatement("UPDATE person SET " + "first_name = ?, last_name = ? WHERE id = ?");
 
 			preparedStatement.setString(1, person.getFirstName());
 			preparedStatement.setString(2, person.getLastName());
 			preparedStatement.setInt(3, id);
 			preparedStatement.executeUpdate();
 
-			System.out.println("UPDATE person SET " +
-					"first_name = ?, last_name = ? WHERE id = ?");
+			System.out.println("UPDATE person SET " + "first_name = ?, last_name = ? WHERE id = ?");
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-			if (connection != null) {
-				try {
-					connection.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
+			preparedStatement(preparedStatement);
+			closeConection(connection);
 		}
 	}
 }
